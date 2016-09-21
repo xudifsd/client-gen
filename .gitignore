@@ -1,0 +1,15 @@
+bin/*
+/bin
+*.o
+*.class
+*.dot
+*.bmp
+*.pdf
+*.ps
+*.jpg
+a.out*
+*.swp
+*.spo
+.idea/
+target/
+*.iml
