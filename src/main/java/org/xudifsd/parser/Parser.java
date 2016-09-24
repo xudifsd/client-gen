@@ -319,7 +319,10 @@ public class Parser {
     private ThriftNamespace parseNamespace() throws SyntaxException {
         eatToken(Kind.TOKEN_NAMESPACE);
         String lang = current.literal;
-        eatToken(Kind.TOKEN_ID);
+        if (current.kind != Kind.TOKEN_ID && current.kind != Kind.TOKEN_MUL) {
+            lexer.throwSyntaxError(String.format("unexpected token '%s'", lang));
+        }
+        advance();
 
         NamespaceScopeBuilder nb = new NamespaceScopeBuilder();
 

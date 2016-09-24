@@ -179,6 +179,8 @@ public class Lexer {
                 return new Token(Kind.TOKEN_LT, "<", this);
             case '>':
                 return new Token(Kind.TOKEN_GT, ">", this);
+            case '*':
+                return new Token(Kind.TOKEN_MUL, "*", this);
             case '0':
             case '1':
             case '2':

@@ -54,6 +54,10 @@ public class ThriftFile implements Acceptable {
         return items;
     }
 
+    public Set<String> getAllNames() {
+        return allNames;
+    }
+
     @Override
     public String toString() {
         return "ThriftFile{" + "namespaces=" + namespaces + ", items=" + items + '}';

@@ -1,5 +1,8 @@
 package org.xudifsd.util;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 public class Utils {
     public static String capitalize(String str) {
         if (str.length() <= 1) {
@@ -27,4 +30,11 @@ public class Utils {
             return filePath.substring(0, filePath.lastIndexOf('/'));
         }
     }
+
+    public static Set<String> intersection(Set<String> a, Set<String> b) {
+        Set<String> d = new TreeSet<>(a);
+        d.retainAll(b);
+        return d;
+    }
+
 }

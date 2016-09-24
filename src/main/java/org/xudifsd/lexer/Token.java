@@ -48,6 +48,7 @@ public class Token {
         TOKEN_COLON, // ":"
         TOKEN_LT, // "<"
         TOKEN_GT, // ">"
+        TOKEN_MUL, // "*"
     }
 
     public final Kind kind; // kind of the token
