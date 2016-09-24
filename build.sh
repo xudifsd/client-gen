@@ -15,6 +15,10 @@ case $CMD in
         mvn assembly:assembly -DdescriptorId=jar-with-dependencies -Dmaven.test.skip=true
     ;;
     "ut")
-        mvn test -Dtest=`echo "$2" | tr -s \. \#`
+        if [[ $# == 2 ]]; then
+            mvn test -Dtest=`echo "$2" | tr -s \. \#`
+        else
+            mvn test
+        fi
     ;;
 esac

@@ -1,7 +1,12 @@
 package org.xudifsd.parser;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 
 import org.xudifsd.ast.ThriftEnum;
 import org.xudifsd.ast.ThriftException;
@@ -21,6 +26,7 @@ import org.xudifsd.lexer.Lexer;
 import org.xudifsd.lexer.SyntaxException;
 import org.xudifsd.lexer.Token;
 import org.xudifsd.lexer.Token.Kind;
+import org.xudifsd.util.Utils;
 
 public class Parser {
     private Lexer lexer;
@@ -125,14 +131,15 @@ public class Parser {
             String name = current.literal;
             eatToken(Kind.TOKEN_ID);
             if (current.kind == Kind.TOKEN_DOT) {
-                // TODO currently only support one level of include, if want to support
+                // TODO currently only support included file in same dir, if want to support
                 // more, change code generator also.
                 eatToken(Kind.TOKEN_DOT);
                 String nextLevelName = current.literal;
                 eatToken(Kind.TOKEN_ID);
-                name = String.format("%s.%s", name, nextLevelName);
+                return new ThriftSelfDefinedType(name, nextLevelName);
+            } else {
+                return new ThriftSelfDefinedType(null, name);
             }
-            return new ThriftSelfDefinedType(name);
         }
     }
 
@@ -324,9 +331,38 @@ public class Parser {
         return new ThriftNamespace(lang, nb.toString());
     }
 
+    private ThriftFile processInclude() throws SyntaxException, IOException {
+        eatToken(Kind.TOKEN_INCLUDE);
+        String filePath = current.literal;
+        eatToken(Kind.TOKEN_STRING_LITERAL);
+        // open it
+        String dirPath = Utils.getDirPath(lexer.getInputPath());
+        File includeFile = new File(dirPath + File.separator + filePath);
+        String canonicalPath = includeFile.getCanonicalPath();
+
+        Reader includeReader = null;
+        try {
+            includeReader = new InputStreamReader(new FileInputStream(includeFile), "UTF8");
+        } catch (FileNotFoundException ex) {
+            lexer.throwSyntaxError(String.format("include file '%s' not found in '%s'",
+                    filePath, canonicalPath));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("your system do not support utf8 encoding");
+        }
+        Parser includedParser = new Parser(canonicalPath, includeReader);
+        ThriftFile result;
+        try {
+            result = includedParser.parse(Utils.getFileName(canonicalPath));
+        } catch (SyntaxException ex) {
+            lexer.throwSyntaxError(ex.getMsg());
+            throw new RuntimeException("unreachable code, put here to avoid warning");
+        }
+        return result;
+    }
+
     // ThriftFile -> ThriftEnum *
-    private ThriftFile parseFile() throws SyntaxException {
-        ThriftFile result = new ThriftFile();
+    private ThriftFile parseFile(String fileName) throws SyntaxException, IOException {
+        ThriftFile result = new ThriftFile(fileName);
 
         while (current.kind != Kind.TOKEN_EOF) {
             if (current.kind == Kind.TOKEN_ENUM) {
@@ -339,6 +375,8 @@ public class Parser {
                 result.add(parseNamespace());
             } else if (current.kind == Kind.TOKEN_SERVICE) {
                 result.add(parseServiceDef());
+            } else if (current.kind == Kind.TOKEN_INCLUDE) {
+                result.add(processInclude());
             } else {
                 error("expect struct|enum|exception|namespace, but got " + current.literal);
             }
@@ -346,7 +384,7 @@ public class Parser {
         return result;
     }
 
-    public ThriftFile parse() throws SyntaxException {
-        return parseFile();
+    public ThriftFile parse(String fileName) throws SyntaxException, IOException {
+        return parseFile(fileName);
     }
 }

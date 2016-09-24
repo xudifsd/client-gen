@@ -29,7 +29,8 @@ public class ClientGen {
         reader = new InputStreamReader(new FileInputStream(in), "UTF8");
         parser = new Parser(in.getCanonicalPath(), reader);
 
-        return parser.parse();
+        String thriftFileName = Utils.getFileName(inName);
+        return parser.parse(thriftFileName);
     }
 
     public void compile(String srcName, String outputName) throws IOException, SyntaxException {
@@ -52,9 +53,8 @@ public class ClientGen {
             } else {
                 outputFile = new PrintStream(outputName);
             }
-            String thriftFileName = Utils.getFileName(srcName);
-            TranslateVisitor translateVisitor = new TranslateVisitor(thriftFileName, outputFile);
-            translateVisitor.visit(file);
+            TranslateVisitor translateVisitor = new TranslateVisitor(outputFile);
+            translateVisitor.translate(file);
         }
     }
 

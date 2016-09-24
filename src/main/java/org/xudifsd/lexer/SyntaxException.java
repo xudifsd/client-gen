@@ -1,14 +1,16 @@
 package org.xudifsd.lexer;
 
-public class SyntaxException extends Exception {
-    private final Lexer.Msg msg;
+import org.xudifsd.parser.Msg;
 
-    public SyntaxException(Lexer.Msg msg) {
+public class SyntaxException extends Exception {
+    private final Msg msg;
+
+    public SyntaxException(Msg msg) {
         super();
         this.msg = msg;
     }
 
-    public Lexer.Msg getMsg() {
+    public Msg getMsg() {
         return msg;
     }
 }

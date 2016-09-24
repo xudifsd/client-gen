@@ -18,22 +18,25 @@ import org.xudifsd.util.Utils;
 import org.xudifsd.visitor.Visitor;
 
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class TranslateVisitor implements Visitor {
     private int indentLevel;
     private PrintStream outputStream;
-    private String thriftFileName;
+    private Map<ThriftFile, String> scopeAlias = new HashMap<>();
+
+    private ThriftFile currentFile = null;
 
     // for generate nested fields
     // outerType setup inTemp to json source, and inner Type use inTemp to generate outTemp
     private String inTemp;
     private String outTemp;
 
-    public TranslateVisitor(String thriftFileName, PrintStream outputStream) {
+    public TranslateVisitor(PrintStream outputStream) {
         this.indentLevel = 0;
         this.outputStream = outputStream;
-        this.thriftFileName = thriftFileName;
     }
 
     private void indent() {
@@ -59,8 +62,9 @@ public class TranslateVisitor implements Visitor {
         outputStream.print(s);
     }
 
-    private String genGetFunctionName(String selfDefinedType) {
-        return "get" + Utils.capitalize(selfDefinedType);
+    private String genGetFunctionName(ThriftFile thriftFile, String selfDefinedType) {
+        String scope = thriftFile.fileName.replace('.', '_');
+        return String.format("get_%s_%s", scope, selfDefinedType);
     }
 
     @Override
@@ -86,21 +90,16 @@ public class TranslateVisitor implements Visitor {
                 outTemp, inTemp));
     }
 
-    // remove included package name, because we put them into one package
-    // TODO make this better
-    private String removePackageName(String id) {
-        int pos = id.lastIndexOf(".");
-        if (pos == -1) {
-            return id;
-        }
-        return id.substring(pos + 1, id.length());
-    }
-
     @Override
     public void visit(ThriftSelfDefinedType type) {
         outTemp = Temp.next();
+        String scope = type.scope;
+        ThriftFile thriftFile = currentFile;
+        if (scope != null) {
+            thriftFile = currentFile.getIncludedFiles().get(scope);
+        }
         printlnWithIndent(String.format("%s = ClientGen.%s(%s)",
-                outTemp, genGetFunctionName(removePackageName(type.name)), inTemp));
+                outTemp, genGetFunctionName(thriftFile, type.name), inTemp));
     }
 
     @Override
@@ -167,7 +166,7 @@ public class TranslateVisitor implements Visitor {
     @Override
     public void visit(ThriftStruct thriftStruct) {
         printlnWithIndent("@staticmethod");
-        printlnWithIndent("def get" + Utils.capitalize(thriftStruct.name) + "(json_value):");
+        printlnWithIndent("def " + genGetFunctionName(currentFile, thriftStruct.name) + "(json_value):");
         indent();
         printlnWithIndent("# check required fields");
         boolean hasRequired = false;
@@ -190,7 +189,7 @@ public class TranslateVisitor implements Visitor {
 
         print("\n");
         printlnWithIndent("# fill in fields");
-        printlnWithIndent("result = " + thriftStruct.name + "()");
+        printlnWithIndent("result = " + String.format("%s.%s", scopeAlias.get(currentFile), thriftStruct.name) + "()");
 
         allFields = thriftStruct.getAllFields().iterator();
         while (allFields.hasNext()) {
@@ -210,9 +209,8 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftEnum thriftEnum) {
-        // TODO current ignore namespace
         printlnWithIndent("@staticmethod");
-        printlnWithIndent("def " + genGetFunctionName(thriftEnum.name) + "(json_value):");
+        printlnWithIndent("def " + genGetFunctionName(currentFile, thriftEnum.name) + "(json_value):");
         indent();
         printlnWithIndent("type_map = {");
         indent();
@@ -220,7 +218,7 @@ public class TranslateVisitor implements Visitor {
         while (keyIt.hasNext()) {
             String key = keyIt.next();
             printSpaces();
-            print(String.format("\"%s\": %s.%s", key, thriftEnum.name, key));
+            print(String.format("\"%s\": %s.%s.%s", key, scopeAlias.get(currentFile), thriftEnum.name, key));
             if (keyIt.hasNext()) {
                 print(",\n");
             } else {
@@ -243,7 +241,7 @@ public class TranslateVisitor implements Visitor {
     }
 
     private String getScopeName(ThriftFile file) {
-        String result = thriftFileName;
+        String result = file.fileName;
         if (file.getNamespaces().get("py") != null) {
             result = file.getNamespaces().get("py").scope;
         }
@@ -252,17 +250,32 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftFile thriftFile) {
+        currentFile = thriftFile;
+        for (NamedItem item : thriftFile.getItems()) {
+            item.accept(this);
+        }
+        for (ThriftFile includedFile : thriftFile.getIncludedFiles().values()) {
+            visit(includedFile);
+        }
+    }
+
+    public void translate(ThriftFile thriftFile) {
         printlnWithIndent("#!/usr/bin/env python");
         printlnWithIndent("# -*- coding: utf-8 -*-");
         printlnWithIndent("");
         // TODO if included file's py namespace different with current file, and defined a same name
         // type, then we should not import *
-        printlnWithIndent(String.format("from %s.ttypes import *", getScopeName(thriftFile)));
+        scopeAlias.put(thriftFile, Temp.next());
+        printlnWithIndent(String.format("import %s.ttypes as %s",
+                getScopeName(thriftFile), scopeAlias.get(thriftFile)));
+        for (ThriftFile includedFile : thriftFile.getIncludedFiles().values()) {
+            scopeAlias.put(includedFile, Temp.next());
+            printlnWithIndent(String.format("import %s.ttypes as %s",
+                    getScopeName(includedFile), scopeAlias.get(includedFile)));
+        }
         printlnWithIndent("");
         printlnWithIndent("class ClientGen:");
         indent();
-        for (NamedItem item : thriftFile.getItems()) {
-            item.accept(this);
-        }
+        visit(thriftFile);
     }
 }

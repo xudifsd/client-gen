@@ -11,12 +11,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class ThriftFile implements Acceptable {
-    // TODO add include field for better code generate, this requires move include
-    // process from Lexer into Parser, also make sure err msg from included file do
-    // not changed a lot.
+    public final String fileName; // do not contains dir and .thrift, used for default scope
+    private Map<String, ThriftFile> includedFiles = new HashMap<>();
     private Map<String, ThriftNamespace> namespaces = new HashMap<String, ThriftNamespace>();
     private List<NamedItem> items = new ArrayList<NamedItem>();
     private Set<String> allNames = new HashSet<String>();
+
+    public ThriftFile(String fileName) {
+        this.fileName = fileName;
+    }
 
     public void add(ThriftNamespace namespace) {
         namespaces.put(namespace.lang, namespace);
@@ -30,6 +33,10 @@ public class ThriftFile implements Acceptable {
         items.add(item);
     }
 
+    public void add(ThriftFile includedFile) {
+        includedFiles.put(includedFile.fileName, includedFile);
+    }
+
     @Override
     public void accept(Visitor v) {
         v.visit(this);
@@ -37,6 +44,10 @@ public class ThriftFile implements Acceptable {
 
     public Map<String, ThriftNamespace> getNamespaces() {
         return namespaces;
+    }
+
+    public Map<String, ThriftFile> getIncludedFiles() {
+        return includedFiles;
     }
 
     public List<NamedItem> getItems() {

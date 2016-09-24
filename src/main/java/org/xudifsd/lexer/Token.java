@@ -24,6 +24,7 @@ public class Token {
         TOKEN_NAMESPACE, // "namespace"
         TOKEN_THROWS, // "throws"
         TOKEN_SERVICE, // "service"
+        TOKEN_INCLUDE, // "include"
 
         // key words modifier
         TOKEN_REQUIRED, // "required"

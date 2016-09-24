@@ -1,16 +1,12 @@
 package org.xudifsd.lexer;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 
 import org.xudifsd.control.Control;
 import org.xudifsd.lexer.Token.Kind;
-import org.xudifsd.util.Utils;
+import org.xudifsd.parser.Msg;
 
 public class Lexer {
     private String inputPath;
@@ -172,37 +168,8 @@ public class Lexer {
                     return new Token(Kind.TOKEN_I32, "i32", this);
                 else if (expectFollowing("64"))
                     return new Token(Kind.TOKEN_I64,"i64", this);
-                else if (expectFollowing("nclude")) {
-                    skipWhitespacesAndComments();
-                    c = this.reader.read();
-                    if ('"' != c) {
-                        throwSyntaxError("illegal include statement");
-                    }
-                    Token filePath = buildStringLiteral();
-                    String dirPath = Utils.getDirPath(inputPath);
-                    File includeFile = new File(dirPath + File.separator + filePath.literal);
-                    Reader includeReader = null;
-                    try {
-                        includeReader = new InputStreamReader(new FileInputStream(includeFile), "UTF8");
-                    } catch (FileNotFoundException ex) {
-                        throwSyntaxError(String.format("include file '%s' not found in '%s'",
-                                filePath.literal, includeFile.getCanonicalPath()));
-                    }
-                    includeLexer = new Lexer(includeFile.getCanonicalPath(), includeReader);
-                    Token next;
-                    try {
-                        next = includeLexer.nextToken();
-                    } catch (SyntaxException ex) {
-                        throw new SyntaxException(new Msg(
-                                String.format("in file included from %s line %d: ", inputPath, lineNo),
-                                ex.getMsg()));
-                    }
-                    if (next.kind == Kind.TOKEN_EOF) {
-                        includeLexer = null;
-                        return nextTokenInternal();
-                    }
-                    return next;
-                }
+                else if (expectFollowing("nclude"))
+                    return new Token(Kind.TOKEN_INCLUDE,"include", this);
                 break;
             case '{':
                 return new Token(Kind.TOKEN_LBRACE, "{", this);
@@ -407,45 +374,23 @@ public class Lexer {
         return t;
     }
 
-    // help to build beautiful err msg for included file
-    public class Msg {
-        public final String msg;
-        public final Msg sub;
-
-        public Msg(String msg, Msg sub) {
-            this.msg = msg;
-            this.sub = sub;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            Msg cur = this;
-            int level = 0;
-            while (cur != null) {
-                if (level != 0) {
-                    sb.append('\n');
-                }
-                for (int i = 0; i < level; ++i) {
-                    sb.append(' ');
-                }
-                sb.append(cur.msg);
-                cur = cur.sub;
-                level++;
-            }
-            return sb.toString();
-        }
+    private Msg buildSyntaxErrorMsg(Msg msg) {
+        return new Msg(String.format("in file included from %s line %d: ", inputPath, lineNo), msg);
     }
 
     private Msg buildSyntaxErrorMsg(String msg) {
         if (this.includeLexer == null) {
             return new Msg(String.format("in file %s line %d: %s", inputPath, lineNo, msg), null);
         }
-        return new Msg(String.format("in file included from %s line %d: ", inputPath, lineNo),
-                includeLexer.buildSyntaxErrorMsg(msg));
+        return buildSyntaxErrorMsg(includeLexer.buildSyntaxErrorMsg(msg));
     }
 
     public void throwSyntaxError(String msg) throws SyntaxException {
+        Msg errMsg = buildSyntaxErrorMsg(msg);
+        throw new SyntaxException(errMsg);
+    }
+
+    public void throwSyntaxError(Msg msg) throws SyntaxException {
         Msg errMsg = buildSyntaxErrorMsg(msg);
         throw new SyntaxException(errMsg);
     }
