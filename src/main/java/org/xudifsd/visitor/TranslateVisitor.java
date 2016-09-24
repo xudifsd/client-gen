@@ -80,6 +80,7 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftBasicType type) {
+        // TODO maybe let user add snippet code and invoke here to support binary type?
         outTemp = Temp.next();
         printlnWithIndent(String.format("%s = %s",
                 outTemp, inTemp));
@@ -241,12 +242,22 @@ public class TranslateVisitor implements Visitor {
         print("\n");
     }
 
+    private String getScopeName(ThriftFile file) {
+        String result = thriftFileName;
+        if (file.getNamespaces().get("py") != null) {
+            result = file.getNamespaces().get("py").scope;
+        }
+        return result;
+    }
+
     @Override
     public void visit(ThriftFile thriftFile) {
         printlnWithIndent("#!/usr/bin/env python");
         printlnWithIndent("# -*- coding: utf-8 -*-");
         printlnWithIndent("");
-        printlnWithIndent(String.format("from %s.ttypes import *", thriftFileName));
+        // TODO if included file's py namespace different with current file, and defined a same name
+        // type, then we should not import *
+        printlnWithIndent(String.format("from %s.ttypes import *", getScopeName(thriftFile)));
         printlnWithIndent("");
         printlnWithIndent("class ClientGen:");
         indent();

@@ -35,6 +35,10 @@ public class ThriftFile implements Acceptable {
         v.visit(this);
     }
 
+    public Map<String, ThriftNamespace> getNamespaces() {
+        return namespaces;
+    }
+
     public List<NamedItem> getItems() {
         return items;
     }
