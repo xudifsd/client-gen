@@ -34,6 +34,84 @@ public class Lexer {
         this.lineNo = 1;
     }
 
+    // return true on skipped
+    private boolean skipWhitespaces() throws IOException {
+        boolean skipped = false;
+        reader.mark(1);
+        int c = reader.read();
+        while (' ' == c || '\t' == c || '\n' == c || '\r' == c) {
+            if ('\n' == c) {
+                this.lineNo++;
+            }
+            skipped = true;
+            reader.mark(1);
+            c = this.reader.read();
+        }
+        reader.reset();
+        return skipped;
+    }
+
+    // return true on skipped
+    private boolean skipComments() throws IOException, SyntaxException {
+        reader.mark(2);
+        int c = reader.read();
+        if (c != '/') {
+            reader.reset();
+            return false;
+        }
+        int next = reader.read();
+
+        if (next == '/') {
+            int c1 = 0;
+            while (c1 != -1 && c1 != '\n') {
+                c1 = this.reader.read();
+            }
+            lineNo++;
+            return true;
+        } else if (next == '*') {
+            int noOfLine = 0; // do not update lineNo directly, use it to provide useful start of comment msg
+
+            int c1 = 0;
+            while (true) {
+                while (c1 != -1 && c1 != '*') {
+                    if (c1 == '\n') {
+                        noOfLine++;
+                    }
+                    c1 = this.reader.read();
+                }
+                if (c1 == -1) {
+                    throwSyntaxError(String.format("unexpected end of comment, started at %s line %d",
+                            inputPath, lineNo));
+                } else {
+                    // c1 == '*'
+                    int c2 = this.reader.read();
+                    if (c2 == '\n') {
+                        noOfLine++;
+                    }
+                    if (c2 == '/') {
+                        break;
+                    } else if (c2 == -1) {
+                        throwSyntaxError(String.format("unexpected end of comment, started at %s line %d",
+                                inputPath, lineNo));
+                    }
+                    c1 = 0;
+                }
+            }
+            this.lineNo += noOfLine;
+            return true;
+        } else {
+            reader.reset();
+            return false;
+        }
+    }
+
+    private void skipWhitespacesAndComments() throws IOException, SyntaxException {
+        boolean skipped;
+        do {
+            skipped = skipWhitespaces() || skipComments();
+        } while (skipped);
+    }
+
     // When called, return the next token from the input stream.
     // Return TOKEN_EOF when reaching the end of the input stream.
     private Token nextTokenInternal() throws IOException, SyntaxException {
@@ -53,18 +131,9 @@ public class Lexer {
             }
         }
 
-        int c = this.reader.read();
-        if (-1 == c) {
-            return new Token(Kind.TOKEN_EOF, "<EOF>", this);
-        }
+        skipWhitespacesAndComments();
 
-        // skip all kinds of "blanks"
-        while (' ' == c || '\t' == c || '\n' == c) {
-            if ('\n' == c) {
-                this.lineNo++;
-            }
-            c = this.reader.read();
-        }
+        int c = reader.read();
         if (-1 == c) {
             return new Token(Kind.TOKEN_EOF, "<EOF>", this);
         }
@@ -106,13 +175,8 @@ public class Lexer {
                 else if (expectFollowing("64"))
                     return new Token(Kind.TOKEN_I64,"i64", this);
                 else if (expectFollowing("nclude")) {
+                    skipWhitespacesAndComments();
                     c = this.reader.read();
-                    while (' ' == c || '\t' == c || '\n' == c) {
-                        if ('\n' == c) {
-                            this.lineNo++;
-                        }
-                        c = this.reader.read();
-                    }
                     if ('"' != c) {
                         throwSyntaxError("illegal include statement");
                     }
@@ -196,6 +260,8 @@ public class Lexer {
                     return new Token(Kind.TOKEN_STRUCT, "struct", this);
                 else if (expectFollowing("et"))
                     return new Token(Kind.TOKEN_SET, "set", this);
+                else if (expectFollowing("ervice"))
+                    return new Token(Kind.TOKEN_SERVICE, "service", this);
                 break;
             case 't':
                 if (expectFollowing("rue"))
@@ -210,52 +276,6 @@ public class Lexer {
             case '"': {
                 return buildStringLiteral();
             }
-            case '/':// comment
-                this.reader.mark(1);
-                int next = reader.read();
-                if (next == '/') {
-                    int c1 = 0;
-                    while (c1 != -1 && c1 != '\n') {
-                        c1 = this.reader.read();
-                    }
-                    lineNo++;
-                    this.reader.reset();
-                    return nextTokenInternal();
-                } else if (next == '*') {
-                    int noOfLine = 0; // for update lineNo
-
-                    int c1 = 0;
-                    while (true) {
-                        while (c1 != -1 && c1 != '*') {
-                            if (c1 == '\n') {
-                                noOfLine++;
-                            }
-                            c1 = this.reader.read();
-                        }
-                        if (c1 == -1) {
-                            throwSyntaxError(String.format("unexpected end of comment, started at %s line %d",
-                                    inputPath, lineNo));
-                        } else {
-                            // c1 == '*'
-                            int c2 = this.reader.read();
-                            if (c2 == '\n') {
-                                noOfLine++;
-                            }
-                            if (c2 == '/') {
-                                break;
-                            } else if (c2 == -1) {
-                                throwSyntaxError(String.format("unexpected end of comment, started at %s line %d",
-                                        inputPath, lineNo));
-                            }
-                            c1 = 0;
-                        }
-                    }
-
-                    this.lineNo += noOfLine;
-                    return nextTokenInternal();
-                }
-                reader.reset();
-                throwSyntaxError("unexpected '/'");
         }
         return new Token(Kind.TOKEN_ID, buildId(c), this);
     }
@@ -333,7 +353,7 @@ public class Lexer {
 
     private String buildId(int s) throws IOException, SyntaxException {
         if (!(s == '_' || (s >= 'a' && s <= 'z') || (s >= 'A' && s <= 'Z'))) { // not in [_a-zA-Z]
-            throwSyntaxError("unexpected '" + (char) s + "'");
+            throwSyntaxError("unexpected char '" + (char) s + "' when trying to build identifier");
         }
         StringBuilder sb = new StringBuilder();
         sb.append((char) s);

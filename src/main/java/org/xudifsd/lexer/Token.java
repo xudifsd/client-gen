@@ -23,6 +23,7 @@ public class Token {
         TOKEN_EXCEPTION, // "exception"
         TOKEN_NAMESPACE, // "namespace"
         TOKEN_THROWS, // "throws"
+        TOKEN_SERVICE, // "service"
 
         // key words modifier
         TOKEN_REQUIRED, // "required"

@@ -23,4 +23,8 @@ public interface Visitor {
     void visit(ThriftDualContainer type);
 
     void visit(ThriftException ex);
+
+    void visit(ThriftService service);
+
+    void visit(ThriftMethod method);
 }

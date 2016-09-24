@@ -8,7 +8,9 @@ import org.xudifsd.ast.ThriftEnum;
 import org.xudifsd.ast.ThriftException;
 import org.xudifsd.ast.ThriftField;
 import org.xudifsd.ast.ThriftFile;
+import org.xudifsd.ast.ThriftMethod;
 import org.xudifsd.ast.ThriftModifier;
+import org.xudifsd.ast.ThriftService;
 import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
 import org.xudifsd.ast.type.ThriftDualContainer;
@@ -123,6 +125,51 @@ public class Parser {
             eatToken(Kind.TOKEN_ID);
             return new ThriftSelfDefinedType(name);
         }
+    }
+
+    // Type id '(' Field* ')' (throws '(' Field* ')' )? ;
+    private ThriftMethod parseMethodDef() throws SyntaxException {
+        ThriftType returnType = parseType(true);
+        String id = current.literal;
+        eatToken(Kind.TOKEN_ID);
+        ThriftMethod result = new ThriftMethod(id, returnType);
+        eatToken(Kind.TOKEN_LPAREN);
+
+        while (current.kind != Kind.TOKEN_RPAREN) {
+            result.addParameter(lexer, parseField());
+        }
+
+        eatToken(Kind.TOKEN_RPAREN);
+
+        if (current.kind == Kind.TOKEN_THROWS) {
+            eatToken(Kind.TOKEN_THROWS);
+            eatToken(Kind.TOKEN_LPAREN);
+
+            while (current.kind != Kind.TOKEN_RPAREN) {
+                result.addException(lexer, parseField());
+            }
+
+            eatToken(Kind.TOKEN_RPAREN);
+        }
+        eatToken(Kind.TOKEN_SEMI);
+        return result;
+    }
+
+    // service id { MethodDef* }
+    private ThriftService parseServiceDef() throws SyntaxException {
+        eatToken(Kind.TOKEN_SERVICE);
+        String id = current.literal;
+        eatToken(Kind.TOKEN_ID);
+        ThriftService result = new ThriftService(id);
+        eatToken(Kind.TOKEN_LBRACE);
+
+        while (current.kind != Kind.TOKEN_RBRACE) {
+            result.addMethod(lexer, parseMethodDef());
+        }
+
+        eatToken(Kind.TOKEN_RBRACE);
+
+        return result;
     }
 
     // exception id { Field* }
@@ -252,6 +299,7 @@ public class Parser {
     }
 
     // namespace lang scope
+    // TODO lang can be * https://thrift.apache.org/docs/idl
     private ThriftNamespace parseNamespace() throws SyntaxException {
         eatToken(Kind.TOKEN_NAMESPACE);
         String lang = current.literal;
@@ -270,9 +318,6 @@ public class Parser {
     // ThriftFile -> ThriftEnum *
     private ThriftFile parseFile() throws SyntaxException {
         ThriftFile result = new ThriftFile();
-        while (current.kind == Kind.TOKEN_NAMESPACE) {
-            result.add(parseNamespace());
-        }
 
         while (current.kind != Kind.TOKEN_EOF) {
             if (current.kind == Kind.TOKEN_ENUM) {
@@ -281,8 +326,12 @@ public class Parser {
                 result.add(parseStructDef());
             } else if (current.kind == Kind.TOKEN_EXCEPTION) {
                 result.add(parseExceptionDef());
+            } else if (current.kind == Kind.TOKEN_NAMESPACE) {
+                result.add(parseNamespace());
+            } else if (current.kind == Kind.TOKEN_SERVICE) {
+                result.add(parseServiceDef());
             } else {
-                error("expect struct|enum|exception, but got " + current.literal);
+                error("expect struct|enum|exception|namespace, but got " + current.literal);
             }
         }
         return result;

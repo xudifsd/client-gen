@@ -59,6 +59,16 @@ public class TranslateVisitor implements Visitor {
     }
 
     @Override
+    public void visit(ThriftService service) {
+        // do nothing
+    }
+
+    @Override
+    public void visit(ThriftMethod method) {
+        // do nothing
+    }
+
+    @Override
     public void visit(ThriftBasicType type) {
         outTemp = Temp.next();
         printlnWithIndent(String.format("%s = %s",
