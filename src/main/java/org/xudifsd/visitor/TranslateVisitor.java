@@ -85,11 +85,21 @@ public class TranslateVisitor implements Visitor {
                 outTemp, inTemp));
     }
 
+    // remove included package name, because we put them into one package
+    // TODO make this better
+    private String removePackageName(String id) {
+        int pos = id.lastIndexOf(".");
+        if (pos == -1) {
+            return id;
+        }
+        return id.substring(pos + 1, id.length());
+    }
+
     @Override
     public void visit(ThriftSelfDefinedType type) {
         outTemp = Temp.next();
         printlnWithIndent(String.format("%s = ClientGen.%s(%s)",
-                outTemp, genGetFunctionName(type.name), inTemp));
+                outTemp, genGetFunctionName(removePackageName(type.name)), inTemp));
     }
 
     @Override

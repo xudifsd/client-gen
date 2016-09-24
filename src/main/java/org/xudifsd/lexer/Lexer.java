@@ -345,11 +345,17 @@ public class Lexer {
                 return false;
             }
         }
-        this.reader.mark(1);
         int c = this.reader.read();
         this.reader.reset();
-        return c != '_' && !(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z')
-                && !(c >= '0' && c <= '9');
+        if (c != '_' && !(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z')
+                && !(c >= '0' && c <= '9')) {
+            // eat expectedString except the last one
+            for (int i = 0; i < expectedString.length(); ++i) {
+                this.reader.read();
+            }
+            return true;
+        }
+        return false;
     }
 
     private String buildId(int s) throws IOException, SyntaxException {

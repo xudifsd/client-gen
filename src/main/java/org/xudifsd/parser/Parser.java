@@ -119,9 +119,19 @@ public class Parser {
             ThriftType valueType = parseType(false);
             eatToken(Kind.TOKEN_GT);
             return new ThriftDualContainer(keyType, valueType);
-        } else {
+        }
+        // self defined type, including struct, enum, exception
+        else {
             String name = current.literal;
             eatToken(Kind.TOKEN_ID);
+            if (current.kind == Kind.TOKEN_DOT) {
+                // TODO currently only support one level of include, if want to support
+                // more, change code generator also.
+                eatToken(Kind.TOKEN_DOT);
+                String nextLevelName = current.literal;
+                eatToken(Kind.TOKEN_ID);
+                name = String.format("%s.%s", name, nextLevelName);
+            }
             return new ThriftSelfDefinedType(name);
         }
     }
@@ -208,9 +218,9 @@ public class Parser {
             eatToken(Kind.TOKEN_ASSIGN);
             // TODO current ignore default value
             if (thriftType instanceof ThriftSelfDefinedType) {
-                eatToken(Kind.TOKEN_ID);
-                eatToken(Kind.TOKEN_DOT);
-                eatToken(Kind.TOKEN_ID);
+                while (current.kind == Kind.TOKEN_ID || current.kind == Kind.TOKEN_DOT) {
+                    advance();
+                }
             } else {
                 advance();
             }

@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ThriftFile implements Acceptable {
+    // TODO add include field for better code generate, this requires move include
+    // process from Lexer into Parser, also make sure err msg from included file do
+    // not changed a lot.
     private Map<String, ThriftNamespace> namespaces = new HashMap<String, ThriftNamespace>();
     private List<NamedItem> items = new ArrayList<NamedItem>();
     private Set<String> allNames = new HashSet<String>();

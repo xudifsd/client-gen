@@ -66,4 +66,14 @@ public class LexerTest {
         Assert.assertEquals(t.kind, Token.Kind.TOKEN_STRING_LITERAL);
         Assert.assertEquals(t.literal, "this is string literal\", with\r\n\tquote in it");
     }
+
+    @Test
+    public void testBuildId() throws IOException, SyntaxException {
+        Reader reader = new StringReader("serviceScheduleStrategy");
+        Lexer lexer = new Lexer("stdin", reader);
+        Token t = lexer.nextToken();
+
+        Assert.assertEquals(t.kind, Token.Kind.TOKEN_ID);
+        Assert.assertEquals(t.literal, "serviceScheduleStrategy");
+    }
 }
