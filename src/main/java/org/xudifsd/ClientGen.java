@@ -8,7 +8,7 @@ import java.io.PrintStream;
 import java.io.Reader;
 
 import org.xudifsd.ast.ThriftFile;
-import org.xudifsd.visitor.IntegrityCheckVisitor;
+import org.xudifsd.visitor.SanityCheckVisitor;
 import org.xudifsd.visitor.TranslateVisitor;
 import org.xudifsd.control.CommandLine;
 import org.xudifsd.control.Control;
@@ -41,7 +41,7 @@ public class ClientGen {
         Control.fileName = srcName;
         file = lexAndParse(srcName);
 
-        IntegrityCheckVisitor checker = new IntegrityCheckVisitor();
+        SanityCheckVisitor checker = new SanityCheckVisitor();
         checker.check(file);
 
         if (Control.debug) {

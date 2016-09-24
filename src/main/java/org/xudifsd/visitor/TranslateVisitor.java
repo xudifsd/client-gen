@@ -246,6 +246,9 @@ public class TranslateVisitor implements Visitor {
 
     private String getScopeName(ThriftFile file) {
         String result = file.fileName;
+        if (file.getNamespaces().get("*") != null) {
+            result = file.getNamespaces().get("*").scope;
+        }
         if (file.getNamespaces().get("py") != null) {
             result = file.getNamespaces().get("py").scope;
         }

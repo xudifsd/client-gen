@@ -21,7 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class IntegrityCheckVisitor implements Visitor {
+public class SanityCheckVisitor implements Visitor {
     private Set<String> allDefinition = new HashSet<>();
     private ThriftFile currentFile = null;
 
