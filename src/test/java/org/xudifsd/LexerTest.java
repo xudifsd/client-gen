@@ -59,11 +59,11 @@ public class LexerTest {
 
     @Test
     public void testBuildStringLiteral() throws IOException, SyntaxException {
-        Reader reader = new StringReader("\"this is string literal\\\", with\r\n\tquote in it\"");
+        Reader reader = new StringReader("\"this is string literal\\\", with\\r\\n\\tquote in it\"");
         Lexer lexer = new Lexer("stdin", reader);
         Token t = lexer.nextToken();
 
         Assert.assertEquals(t.kind, Token.Kind.TOKEN_STRING_LITERAL);
-        Assert.assertEquals(t.literal, "this is string literal\\\", with\r\n\tquote in it");
+        Assert.assertEquals(t.literal, "this is string literal\", with\r\n\tquote in it");
     }
 }

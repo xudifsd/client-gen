@@ -291,6 +291,9 @@ public class Lexer {
                 }
                 if (escape) {
                     switch (c1) {
+                        case 'r':
+                            sb.append("\r");
+                            break;
                         case 't':
                             sb.append("\t");
                             break;
