@@ -13,7 +13,6 @@ import org.xudifsd.lexer.Token.Kind;
 import org.xudifsd.util.Utils;
 
 public class Lexer {
-    private File input;
     private String inputPath;
     private Reader reader; // input stream for the above file
     private Lexer includeLexer = null;
@@ -27,9 +26,8 @@ public class Lexer {
         return lineNo;
     }
 
-    public Lexer(File input, Reader reader) throws IOException {
-        this.input = input;
-        this.inputPath = input.getCanonicalPath();
+    public Lexer(String inputPath, Reader reader) throws IOException {
+        this.inputPath = inputPath;
         this.reader = new BufferedReader(reader);
         this.lineNo = 1;
     }
@@ -190,7 +188,7 @@ public class Lexer {
                         throwSyntaxError(String.format("include file '%s' not found in '%s'",
                                 filePath.literal, includeFile.getCanonicalPath()));
                     }
-                    includeLexer = new Lexer(includeFile, includeReader);
+                    includeLexer = new Lexer(includeFile.getCanonicalPath(), includeReader);
                     Token next;
                     try {
                         next = includeLexer.nextToken();

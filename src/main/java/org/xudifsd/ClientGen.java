@@ -27,7 +27,7 @@ public class ClientGen {
 
         File in = new File(inName);
         reader = new InputStreamReader(new FileInputStream(in), "UTF8");
-        parser = new Parser(in, reader);
+        parser = new Parser(in.getCanonicalPath(), reader);
 
         return parser.parse();
     }

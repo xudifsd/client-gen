@@ -1,6 +1,5 @@
 package org.xudifsd.parser;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 
@@ -27,8 +26,8 @@ public class Parser {
     private Lexer lexer;
     private Token current;
 
-    public Parser(File input, Reader reader) throws SyntaxException, IOException {
-        lexer = new Lexer(input, reader);
+    public Parser(String inputPath, Reader reader) throws SyntaxException, IOException {
+        lexer = new Lexer(inputPath, reader);
         current = lexer.nextToken();
     }
 
