@@ -1,11 +1,21 @@
-package org.xudifsd.ast;
+package org.xudifsd.visitor;
 
+import org.xudifsd.ast.NamedItem;
+import org.xudifsd.ast.ThriftEnum;
+import org.xudifsd.ast.ThriftException;
+import org.xudifsd.ast.ThriftField;
+import org.xudifsd.ast.ThriftFile;
+import org.xudifsd.ast.ThriftMethod;
+import org.xudifsd.ast.ThriftModifier;
+import org.xudifsd.ast.ThriftService;
+import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
 import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
 import org.xudifsd.ast.type.ThriftSingleContainer;
 import org.xudifsd.util.Temp;
 import org.xudifsd.util.Utils;
+import org.xudifsd.visitor.Visitor;
 
 import java.io.PrintStream;
 import java.util.Iterator;

@@ -1,6 +1,7 @@
 package org.xudifsd.ast;
 
 import org.xudifsd.ast.type.ThriftType;
+import org.xudifsd.visitor.Visitor;
 
 // struct field
 public class ThriftField extends NamedItem {

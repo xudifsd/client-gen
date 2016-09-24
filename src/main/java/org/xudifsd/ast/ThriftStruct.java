@@ -2,6 +2,7 @@ package org.xudifsd.ast;
 
 import org.xudifsd.lexer.Lexer;
 import org.xudifsd.lexer.SyntaxException;
+import org.xudifsd.visitor.Visitor;
 
 import java.util.ArrayList;
 import java.util.HashSet;

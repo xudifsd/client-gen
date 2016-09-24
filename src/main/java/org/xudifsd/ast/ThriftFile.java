@@ -1,6 +1,7 @@
 package org.xudifsd.ast;
 
 import org.xudifsd.ast.type.ThriftNamespace;
+import org.xudifsd.visitor.Visitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;

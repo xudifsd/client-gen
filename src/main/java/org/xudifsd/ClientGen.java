@@ -8,7 +8,8 @@ import java.io.PrintStream;
 import java.io.Reader;
 
 import org.xudifsd.ast.ThriftFile;
-import org.xudifsd.ast.TranslateVisitor;
+import org.xudifsd.visitor.IntegrityCheckVisitor;
+import org.xudifsd.visitor.TranslateVisitor;
 import org.xudifsd.control.CommandLine;
 import org.xudifsd.control.Control;
 import org.xudifsd.lexer.SyntaxException;
@@ -37,11 +38,14 @@ public class ClientGen {
             return;
         }
         Control.fileName = srcName;
+        file = lexAndParse(srcName);
+
+        IntegrityCheckVisitor checker = new IntegrityCheckVisitor();
+        checker.check(file);
 
         if (Control.debug) {
-            System.out.println(lexAndParse(srcName));
+            System.out.println(file);
         } else {
-            file = lexAndParse(srcName);
             PrintStream outputFile;
             if (outputName == null) {
                 outputFile = System.out;

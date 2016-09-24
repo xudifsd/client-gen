@@ -1,6 +1,6 @@
 package org.xudifsd.ast.type;
 
-import org.xudifsd.ast.Visitor;
+import org.xudifsd.visitor.Visitor;
 
 public class ThriftBasicType implements ThriftType {
     public final Type t;
