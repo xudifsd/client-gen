@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class IntegrityCheckVisitor implements Visitor {
-    private boolean allowSame = true;
     private Set<String> allDefinition = new HashSet<>();
+    private ThriftFile currentFile = null;
 
     @Override
     public void visit(ThriftBasicType type) {
@@ -102,6 +102,7 @@ public class IntegrityCheckVisitor implements Visitor {
     @Override
     public void visit(ThriftFile thriftFile) {
         // TODO check if all type has its definition
+        currentFile = thriftFile;
     }
 
     private void checkDoNotContainSameName(ThriftFile thriftFile) throws SyntaxException {
@@ -118,11 +119,13 @@ public class IntegrityCheckVisitor implements Visitor {
     public void check(ThriftFile thriftFile) throws SyntaxException{
         // check if has duplicated definition even in included file
         Map<String, Set<String>> allNs = new HashMap<>();
-        allowSame = allowSame(allNs, thriftFile);
-        if (!allowSame) {
+        if (!allowSame(allNs, thriftFile)) {
             checkDoNotContainSameName(thriftFile);
         }
 
         visit(thriftFile);
+        for (ThriftFile includedFile : thriftFile.getIncludedFiles().values()) {
+            visit(includedFile);
+        }
     }
 }

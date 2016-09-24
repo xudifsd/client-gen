@@ -315,7 +315,6 @@ public class Parser {
     }
 
     // namespace lang scope
-    // TODO lang can be * https://thrift.apache.org/docs/idl
     private ThriftNamespace parseNamespace() throws SyntaxException {
         eatToken(Kind.TOKEN_NAMESPACE);
         String lang = current.literal;

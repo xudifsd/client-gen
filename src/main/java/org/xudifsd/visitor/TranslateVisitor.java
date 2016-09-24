@@ -104,6 +104,8 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftSingleContainer type) {
+        // TODO if innerType is basic type, we may pass directly, but what if we want to support user defined
+        // transform function for binary?
         String myOutTemp = Temp.next();
         String addMethod;
         if (type.type == ThriftSingleContainer.Type.LIST) {
@@ -128,6 +130,8 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftDualContainer type) {
+        // TODO if innerType is basic type, we may pass directly, but what if we want to support user defined
+        // transform function for binary?
         String myOutTemp = Temp.next();
         printlnWithIndent(String.format("%s = {}", myOutTemp));
 
@@ -263,8 +267,6 @@ public class TranslateVisitor implements Visitor {
         printlnWithIndent("#!/usr/bin/env python");
         printlnWithIndent("# -*- coding: utf-8 -*-");
         printlnWithIndent("");
-        // TODO if included file's py namespace different with current file, and defined a same name
-        // type, then we should not import *
         scopeAlias.put(thriftFile, Temp.next());
         printlnWithIndent(String.format("import %s.ttypes as %s",
                 getScopeName(thriftFile), scopeAlias.get(thriftFile)));
