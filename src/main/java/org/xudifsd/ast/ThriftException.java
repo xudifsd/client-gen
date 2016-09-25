@@ -25,6 +25,10 @@ public class ThriftException extends NamedItem {
         allFields.add(field);
     }
 
+    public List<ThriftField> getAllFields() {
+        return allFields;
+    }
+
     @Override
     public void accept(Visitor v) {
         v.visit(this);

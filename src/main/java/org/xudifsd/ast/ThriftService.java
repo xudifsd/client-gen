@@ -22,6 +22,10 @@ public class ThriftService extends NamedItem {
         methods.put(method.name, method);
     }
 
+    public Map<String, ThriftMethod> getMethods() {
+        return methods;
+    }
+
     @Override
     public void accept(Visitor v) {
         v.visit(this);

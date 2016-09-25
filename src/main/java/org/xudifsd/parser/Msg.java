@@ -5,6 +5,11 @@ public class Msg {
     public final String msg;
     public final Msg sub;
 
+    public Msg(String msg) {
+        this.msg = msg;
+        this.sub = null;
+    }
+
     public Msg(String msg, Msg sub) {
         this.msg = msg;
         this.sub = sub;

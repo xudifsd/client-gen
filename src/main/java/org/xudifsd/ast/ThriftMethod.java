@@ -42,6 +42,14 @@ public class ThriftMethod extends NamedItem {
         exceptionList.add(ex);
     }
 
+    public List<ThriftField> getParList() {
+        return parList;
+    }
+
+    public List<ThriftField> getExceptionList() {
+        return exceptionList;
+    }
+
     @Override
     public void accept(Visitor v) {
         v.visit(this);
