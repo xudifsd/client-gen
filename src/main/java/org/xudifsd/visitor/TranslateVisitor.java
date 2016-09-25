@@ -14,8 +14,6 @@ import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
 import org.xudifsd.ast.type.ThriftSingleContainer;
 import org.xudifsd.util.Temp;
-import org.xudifsd.util.Utils;
-import org.xudifsd.visitor.Visitor;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -266,18 +264,20 @@ public class TranslateVisitor implements Visitor {
         }
     }
 
-    public void translate(ThriftFile thriftFile) {
-        printlnWithIndent("#!/usr/bin/env python");
-        printlnWithIndent("# -*- coding: utf-8 -*-");
-        printlnWithIndent("");
+    private void genInclude(ThriftFile thriftFile) {
         scopeAlias.put(thriftFile, Temp.next());
         printlnWithIndent(String.format("import %s.ttypes as %s",
                 getScopeName(thriftFile), scopeAlias.get(thriftFile)));
         for (ThriftFile includedFile : thriftFile.getIncludedFiles().values()) {
-            scopeAlias.put(includedFile, Temp.next());
-            printlnWithIndent(String.format("import %s.ttypes as %s",
-                    getScopeName(includedFile), scopeAlias.get(includedFile)));
+            genInclude(includedFile);
         }
+    }
+
+    public void translate(ThriftFile thriftFile) {
+        printlnWithIndent("#!/usr/bin/env python");
+        printlnWithIndent("# -*- coding: utf-8 -*-");
+        printlnWithIndent("");
+        genInclude(thriftFile);
         printlnWithIndent("");
         printlnWithIndent("class ClientGen:");
         indent();
