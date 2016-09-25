@@ -9,6 +9,7 @@ import org.xudifsd.ast.ThriftMethod;
 import org.xudifsd.ast.ThriftService;
 import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
+import org.xudifsd.ast.type.ThriftDefaultValue;
 import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftNamespace;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
@@ -26,6 +27,8 @@ import java.util.Set;
 public class SanityCheckVisitor implements Visitor {
     private Set<String> allDefinition = new HashSet<>();
     private ThriftFile currentFile = null;
+    private NamedItem namedItem = null; // for check defaultType
+    private ThriftField thriftField = null; // for check defaultType
 
     @Override
     public void visit(ThriftBasicType type) {
@@ -35,7 +38,8 @@ public class SanityCheckVisitor implements Visitor {
     @Override
     public void visit(ThriftSelfDefinedType type) {
         if (type.scope == null) {
-            if (!currentFile.getAllNames().contains(type.name)) {
+            namedItem = currentFile.getItems().get(type.name);
+            if (namedItem == null) {
                 throw new SanityCheckException(
                         String.format("type %s not defined", type.name));
             }
@@ -45,7 +49,8 @@ public class SanityCheckVisitor implements Visitor {
                 throw new SanityCheckException(
                         String.format("type %s.%s not defined", type.scope, type.name));
             }
-            if (!includedFile.getAllNames().contains(type.name)) {
+            namedItem = includedFile.getItems().get(type.name);
+            if (namedItem == null) {
                 throw new SanityCheckException(
                         String.format("type %s.%s not defined", type.name, type.scope));
             }
@@ -91,10 +96,41 @@ public class SanityCheckVisitor implements Visitor {
     }
 
     @Override
+    public void visit(ThriftDefaultValue value) {
+        if (!thriftField.type.equals(thriftField.defaultValue.type)) {
+            throw new SanityCheckException(
+                    String.format("default value's type %s not match with declared type %s",
+                            thriftField.defaultValue.type, thriftField.type));
+        }
+        if (thriftField.type instanceof ThriftBasicType) {
+            // do nothing, maybe should check if type matches value literal later
+        } else if (thriftField.type instanceof ThriftSelfDefinedType) {
+            thriftField.type.accept(this);
+            if (namedItem instanceof ThriftEnum) {
+                ThriftEnum thriftEnum = (ThriftEnum) namedItem;
+                String literal = value.literal.substring(value.literal.lastIndexOf('.') + 1, value.literal.length());
+                if (thriftEnum.getEnums().get(literal) == null) {
+                    throw new SanityCheckException(
+                            String.format("enum %s have no %s defined",
+                                    thriftEnum.name, literal));
+                } else {
+                    return;
+                }
+            }
+        }
+        throw new SanityCheckException(
+                String.format("%s can not have default value",
+                        thriftField.defaultValue.type));
+    }
+
+    @Override
     public void visit(ThriftField thriftField) {
+        this.thriftField = thriftField;
         ThriftType type = thriftField.type;
         type.accept(this);
-        // TODO check default value if added support for it
+        if (thriftField.defaultValue != null) {
+            thriftField.defaultValue.accept(this);
+        }
     }
 
     @Override
@@ -113,7 +149,7 @@ public class SanityCheckVisitor implements Visitor {
     public void visit(ThriftFile thriftFile) {
         currentFile = thriftFile;
 
-        for (NamedItem item : thriftFile.getItems()) {
+        for (NamedItem item : thriftFile.getItems().values()) {
             item.accept(this);
         }
 

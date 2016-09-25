@@ -17,6 +17,7 @@ import org.xudifsd.ast.ThriftModifier;
 import org.xudifsd.ast.ThriftService;
 import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
+import org.xudifsd.ast.type.ThriftDefaultValue;
 import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftNamespace;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
@@ -131,8 +132,7 @@ public class Parser {
             String name = current.literal;
             eatToken(Kind.TOKEN_ID);
             if (current.kind == Kind.TOKEN_DOT) {
-                // TODO currently only support included file in same dir, if want to support
-                // more, change code generator also.
+                // thrift support only reference one level of include file, so this is sufficient
                 eatToken(Kind.TOKEN_DOT);
                 String nextLevelName = current.literal;
                 eatToken(Kind.TOKEN_ID);
@@ -204,6 +204,26 @@ public class Parser {
         return result;
     }
 
+    private ThriftDefaultValue parseDefaultValue(ThriftType type) throws SyntaxException {
+        eatToken(Kind.TOKEN_ASSIGN);
+        String literal;
+        if (type instanceof ThriftSelfDefinedType) {
+            ScopeBuilder sb = new ScopeBuilder();
+
+            while (current.kind == Kind.TOKEN_DOT
+                    || current.kind == Kind.TOKEN_ID) {
+                sb.append(current);
+                advance();
+            }
+            literal = sb.toString();
+        } else {
+            literal = current.literal;
+            advance();
+        }
+        // do no check here, let sanity checker do it
+        return new ThriftDefaultValue(type, literal);
+    }
+
     // num: [required|option] Type id [= defaultValue]
     private ThriftField parseField() throws SyntaxException {
         eatToken(Kind.TOKEN_NUM); // TODO current ignore field num
@@ -221,19 +241,12 @@ public class Parser {
         ThriftType thriftType = parseType(false);
         String name = current.literal;
         eatToken(Kind.TOKEN_ID);
+        ThriftDefaultValue defaultValue = null;
         if (current.kind == Kind.TOKEN_ASSIGN) {
-            eatToken(Kind.TOKEN_ASSIGN);
-            // TODO current ignore default value
-            if (thriftType instanceof ThriftSelfDefinedType) {
-                while (current.kind == Kind.TOKEN_ID || current.kind == Kind.TOKEN_DOT) {
-                    advance();
-                }
-            } else {
-                advance();
-            }
+            defaultValue = parseDefaultValue(thriftType);
         }
         eatTokenOptional(Kind.TOKEN_COMMA, Kind.TOKEN_SEMI);
-        return new ThriftField(name, thriftType, modifier, null);
+        return new ThriftField(name, thriftType, modifier, defaultValue);
     }
 
     // struct id { Field * }
@@ -279,11 +292,11 @@ public class Parser {
         return result;
     }
 
-    private class NamespaceScopeBuilder {
+    private class ScopeBuilder {
         private StringBuilder sb = new StringBuilder();
         private boolean switcher = true;
 
-        public NamespaceScopeBuilder() {
+        public ScopeBuilder() {
         }
 
         public void append(Token token) throws SyntaxException {
@@ -291,7 +304,7 @@ public class Parser {
             String lexeme = token.literal;
             if (switcher && kind != Kind.TOKEN_ID
                     || (!switcher && kind != Kind.TOKEN_DOT)) {
-                lexer.throwSyntaxError("illegal namespace scope '" + sb.toString() + "'");
+                lexer.throwSyntaxError("illegal scope '" + sb.toString() + "'");
             }
             switcher = !switcher;
             if (kind == Kind.TOKEN_ID) {
@@ -305,7 +318,7 @@ public class Parser {
         public String toString() {
             if (switcher) {
                 try {
-                    lexer.throwSyntaxError("illegal namespace scope '" + sb.toString() + "'");
+                    lexer.throwSyntaxError("illegal scope '" + sb.toString() + "'");
                 } catch (SyntaxException e) {
                     e.printStackTrace();
                 }
@@ -323,7 +336,7 @@ public class Parser {
         }
         advance();
 
-        NamespaceScopeBuilder nb = new NamespaceScopeBuilder();
+        ScopeBuilder nb = new ScopeBuilder();
 
         while (current.kind == Kind.TOKEN_DOT
                 || current.kind == Kind.TOKEN_ID) {

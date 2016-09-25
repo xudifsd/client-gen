@@ -8,6 +8,7 @@ import org.xudifsd.ast.ThriftMethod;
 import org.xudifsd.ast.ThriftService;
 import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
+import org.xudifsd.ast.type.ThriftDefaultValue;
 import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
 import org.xudifsd.ast.type.ThriftSingleContainer;
@@ -34,4 +35,6 @@ public interface Visitor {
     void visit(ThriftService service);
 
     void visit(ThriftMethod method);
+
+    void visit(ThriftDefaultValue value);
 }

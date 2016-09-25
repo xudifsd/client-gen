@@ -3,10 +3,8 @@ package org.xudifsd.ast;
 import org.xudifsd.ast.type.ThriftNamespace;
 import org.xudifsd.visitor.Visitor;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,8 +12,7 @@ public class ThriftFile implements Acceptable {
     public final String fileName; // do not contains dir and .thrift, used for default scope
     private Map<String, ThriftFile> includedFiles = new HashMap<>();
     private Map<String, ThriftNamespace> namespaces = new HashMap<String, ThriftNamespace>();
-    private List<NamedItem> items = new ArrayList<NamedItem>();
-    private Set<String> allNames = new HashSet<String>();
+    private Map<String, NamedItem> items = new HashMap<>();
 
     public ThriftFile(String fileName) {
         this.fileName = fileName;
@@ -26,11 +23,10 @@ public class ThriftFile implements Acceptable {
     }
 
     public void add(NamedItem item) {
-        if (allNames.contains(item.name)) {
+        if (items.get(item.name) != null) {
             throw new RuntimeException(String.format("duplicated name %s in file", item.name));
         }
-        allNames.add(item.name);
-        items.add(item);
+        items.put(item.name, item);
     }
 
     public void add(ThriftFile includedFile) {
@@ -50,12 +46,12 @@ public class ThriftFile implements Acceptable {
         return includedFiles;
     }
 
-    public List<NamedItem> getItems() {
+    public Map<String, NamedItem> getItems() {
         return items;
     }
 
     public Set<String> getAllNames() {
-        return allNames;
+        return items.keySet();
     }
 
     @Override

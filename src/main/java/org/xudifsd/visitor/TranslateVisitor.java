@@ -10,6 +10,7 @@ import org.xudifsd.ast.ThriftModifier;
 import org.xudifsd.ast.ThriftService;
 import org.xudifsd.ast.ThriftStruct;
 import org.xudifsd.ast.type.ThriftBasicType;
+import org.xudifsd.ast.type.ThriftDefaultValue;
 import org.xudifsd.ast.type.ThriftDualContainer;
 import org.xudifsd.ast.type.ThriftSelfDefinedType;
 import org.xudifsd.ast.type.ThriftSingleContainer;
@@ -77,6 +78,11 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftMethod method) {
+        // do nothing
+    }
+
+    @Override
+    public void visit(ThriftDefaultValue value) {
         // do nothing
     }
 
@@ -156,6 +162,7 @@ public class TranslateVisitor implements Visitor {
 
     @Override
     public void visit(ThriftField field) {
+        // ignore default value here, underlying library will do it for us
         printlnWithIndent(String.format("if json_value.get(\"%s\") != None:", field.name));
         indent();
         inTemp = Temp.next();
@@ -256,7 +263,7 @@ public class TranslateVisitor implements Visitor {
     @Override
     public void visit(ThriftFile thriftFile) {
         currentFile = thriftFile;
-        for (NamedItem item : thriftFile.getItems()) {
+        for (NamedItem item : thriftFile.getItems().values()) {
             item.accept(this);
         }
         for (ThriftFile includedFile : thriftFile.getIncludedFiles().values()) {
