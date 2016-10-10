@@ -221,7 +221,8 @@ public class TranslateVisitor implements Visitor {
         printlnWithIndent("@staticmethod");
         printlnWithIndent("def " + genGetFunctionName(currentFile, thriftEnum.name) + "(json_value):");
         indent();
-        printlnWithIndent("type_map = {");
+
+        printlnWithIndent("str_map = {");
         indent();
         Iterator<String> keyIt = thriftEnum.getEnums().keySet().iterator();
         while (keyIt.hasNext()) {
@@ -236,15 +237,59 @@ public class TranslateVisitor implements Visitor {
         }
         unIndent();
         printlnWithIndent("}");
-        printlnWithIndent("if type_map.get(json_value) == None:");
+
+        printlnWithIndent("int_map = {");
+        indent();
+        Iterator<Map.Entry<String, Integer>> it = thriftEnum.getEnums().entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Integer> entry = it.next();
+            String key = entry.getKey();
+            Integer value = entry.getValue();
+            printSpaces();
+            print(String.format("%d: %s.%s.%s", value, scopeAlias.get(currentFile), thriftEnum.name, key));
+            if (it.hasNext()) {
+                print(",\n");
+            } else {
+                print("\n");
+            }
+        }
+        unIndent();
+        printlnWithIndent("}");
+
+        printlnWithIndent("if type(json_value) == str:");
+        indent();
+
+        printlnWithIndent("if str_map.get(json_value) == None:");
         indent();
         printlnWithIndent(String.format("raise KeyError(\"unknown \" + str(json_value) + \" in enum %s\")",
                 thriftEnum.name));
         unIndent();
         printlnWithIndent("else:");
         indent();
-        printlnWithIndent("return type_map[json_value]");
+        printlnWithIndent("return str_map[json_value]");
         unIndent();
+        unIndent();
+
+        printlnWithIndent("elif type(json_value) == int:");
+        indent();
+
+        printlnWithIndent("if int_map.get(json_value) == None:");
+        indent();
+        printlnWithIndent(String.format("raise KeyError(\"unknown \" + str(json_value) + \" in enum %s\")",
+                thriftEnum.name));
+        unIndent();
+        printlnWithIndent("else:");
+        indent();
+        printlnWithIndent("return int_map[json_value]");
+        unIndent();
+        unIndent();
+
+        printlnWithIndent("else:");
+        indent();
+        printlnWithIndent(String.format("raise TypeError(\"only support str/int in json as enum value, but get \" "
+                + "+ str(type(json_value)) + \" in enum %s\")", thriftEnum.name));
+        unIndent();
+
         unIndent();
         print("\n");
     }

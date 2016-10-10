@@ -266,6 +266,7 @@ public class Parser {
     }
 
     // id = num[,;]
+    // TODO support enum field without assigning num
     private void parseEnumItem(ThriftEnum thriftEnum) throws SyntaxException {
         String key = current.literal;
         eatToken(Kind.TOKEN_ID);
