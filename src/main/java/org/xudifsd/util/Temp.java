@@ -7,6 +7,6 @@ public class Temp {
     }
 
     public static String next() {
-        return "__tmp_x_" + (Temp.count++);
+        return "tmp_x_" + (Temp.count++);
     }
 }
