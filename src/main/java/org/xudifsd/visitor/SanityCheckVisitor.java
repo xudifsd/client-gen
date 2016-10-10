@@ -104,6 +104,7 @@ public class SanityCheckVisitor implements Visitor {
         }
         if (thriftField.type instanceof ThriftBasicType) {
             // do nothing, maybe should check if type matches value literal later
+            return;
         } else if (thriftField.type instanceof ThriftSelfDefinedType) {
             thriftField.type.accept(this);
             if (namedItem instanceof ThriftEnum) {
