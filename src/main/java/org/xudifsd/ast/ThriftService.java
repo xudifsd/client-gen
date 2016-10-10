@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ThriftService extends NamedItem {
-    private Map<String, ThriftMethod> methods = new HashMap<>();
+    private Map<String, ThriftMethod> methods = new HashMap<String, ThriftMethod>();
 
     public ThriftService(String name) {
         super(name);

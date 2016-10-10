@@ -32,7 +32,7 @@ public class Utils {
     }
 
     public static Set<String> intersection(Set<String> a, Set<String> b) {
-        Set<String> d = new TreeSet<>(a);
+        Set<String> d = new TreeSet<String>(a);
         d.retainAll(b);
         return d;
     }

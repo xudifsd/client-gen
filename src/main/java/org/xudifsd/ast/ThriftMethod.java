@@ -13,11 +13,11 @@ import java.util.Set;
 public class ThriftMethod extends NamedItem {
     public final ThriftType returnType;
 
-    private List<ThriftField> parList = new ArrayList<>();
-    private Set<String> allArgId = new HashSet<>();
+    private List<ThriftField> parList = new ArrayList<ThriftField>();
+    private Set<String> allArgId = new HashSet<String>();
 
-    private List<ThriftField> exceptionList = new ArrayList<>();
-    private Set<String> allExId = new HashSet<>();
+    private List<ThriftField> exceptionList = new ArrayList<ThriftField>();
+    private Set<String> allExId = new HashSet<String>();
 
     public ThriftMethod(String name, ThriftType returnType) {
         super(name);

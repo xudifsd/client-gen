@@ -24,7 +24,7 @@ import java.util.Map;
 public class TranslateVisitor implements Visitor {
     private int indentLevel;
     private PrintStream outputStream;
-    private Map<ThriftFile, String> scopeAlias = new HashMap<>();
+    private Map<ThriftFile, String> scopeAlias = new HashMap<ThriftFile, String>();
 
     private ThriftFile currentFile = null;
 

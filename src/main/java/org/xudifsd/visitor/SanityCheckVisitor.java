@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SanityCheckVisitor implements Visitor {
-    private Set<String> allDefinition = new HashSet<>();
+    private Set<String> allDefinition = new HashSet<String>();
     private ThriftFile currentFile = null;
     private NamedItem namedItem = null; // for check defaultType
     private ThriftField thriftField = null; // for check defaultType
@@ -215,7 +215,7 @@ public class SanityCheckVisitor implements Visitor {
     public void check(ThriftFile thriftFile) throws SyntaxException {
         try {
             // check if has duplicated definition even in included file
-            Map<String, Set<String>> allNs = new HashMap<>();
+            Map<String, Set<String>> allNs = new HashMap<String, Set<String>>();
             if (!allowSame(allNs, thriftFile)) {
                 checkDoNotContainSameName(thriftFile);
             }

@@ -10,9 +10,9 @@ import java.util.Set;
 
 public class ThriftFile implements Acceptable {
     public final String fileName; // do not contains dir and .thrift, used for default scope
-    private Map<String, ThriftFile> includedFiles = new HashMap<>();
+    private Map<String, ThriftFile> includedFiles = new HashMap<String, ThriftFile>();
     private Map<String, ThriftNamespace> namespaces = new HashMap<String, ThriftNamespace>();
-    private Map<String, NamedItem> items = new HashMap<>();
+    private Map<String, NamedItem> items = new HashMap<String, NamedItem>();
 
     public ThriftFile(String fileName) {
         this.fileName = fileName;
